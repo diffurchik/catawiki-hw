@@ -1,0 +1,7 @@
+{
+  "playwright.configFile": "${workspaceFolder}/playwright.config.ts",
+  "playwright.runOptions": {
+    "headed": true,
+    "project": ["chromium"]
+  }
+}
