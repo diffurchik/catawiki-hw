@@ -1,6 +1,6 @@
 # catawiki-hw
 
-TypeScript Playwright E2E test project with ESLint, Prettier, Husky pre-commit checks, and Allure reporting.
+TypeScript Playwright E2E test project with ESLint, Prettier, and Husky pre-commit checks.
 
 ## Setup
 
@@ -13,54 +13,81 @@ Optional local environment:
 
 ```bash
 cp .env.example .env
+# Set E2E_USER_EMAIL and E2E_USER_PASSWORD for logged-in tests
 ```
 
 ## Scripts
 
-- `npm run test:e2e` - run Playwright tests.
-- `npm run test:e2e:headed` - run tests in headed browser mode.
+- `npm run test:e2e` - run Playwright tests (headless, Chromium / Firefox / WebKit).
+- `npm run test:e2e:headed` - run tests with a visible browser.
 - `npm run test:e2e:ui` - open Playwright UI mode.
 - `npm run lint` - run ESLint.
 - `npm run format:check` - check Prettier formatting.
 - `npm run typecheck` - run TypeScript type checking.
-- `npm run report:allure` - generate an Allure HTML report from `allure-results`.
-- `npm run report:open` - open the generated Allure report.
 
 ## Structure
 
 ```text
-tests/
-  e2e/
-    auth/        # Login flow and global setup (storage state)
-    fixtures/    # Extended test / expect and authenticatedDescribe
-    pages/       # Page Object classes (locators, actions, page-level assertions)
-    specs/       # E2E test specs
-    utils/       # Shared test data and helpers
-    .auth/       # Generated session (gitignored)
+tests/e2e/
+  fixtures/    # Extended test and loggedInDescribe
+  pages/       # Page Object classes (locators and actions)
+  specs/       # E2E test specs
+  steps/       # Reusable multi-page workflows
+  utils/       # Env helpers, new-tab URL assertions
 ```
 
 ## Architecture
 
 ### Page Objects
 
-Each page class owns its locators, user actions, and page-specific assertions (for example `expectLoaded()`). Specs instantiate page objects from the Playwright `page` fixture.
+Each page class owns its locators and user actions. Specs instantiate page objects from the Playwright `page` fixture.
 
-### When to add more layers
+### Steps layer
 
-- **Custom fixtures** — when several specs share non-trivial setup (auth, API clients, seeded state).
-- **Steps layer** — when a workflow spans multiple pages and is reused across tests.
+[`tests/e2e/steps/lot.steps.ts`](tests/e2e/steps/lot.steps.ts) encapsulates search → open lot navigation reused across tests.
 
 ### Authentication
 
-Credentials live in `.env` (`E2E_USER_EMAIL`, `E2E_USER_PASSWORD`). Before the test run, `globalSetup` signs in once via `POST /en/accounts/signin` (API) and saves session cookies to `tests/e2e/.auth/user.json`. Playwright injects that file into the browser context with `storageState`, so tests start already logged in — no UI login step.
+Credentials live in `.env` (`E2E_USER_EMAIL`, `E2E_USER_PASSWORD`).
 
-- Guest tests use the default `page` fixture (no login).
-- Authenticated tests use `authenticatedDescribe()` from `tests/e2e/fixtures`, which applies the saved `storageState`.
+- **Guest tests** use the extended `test` fixture from [`tests/e2e/fixtures/index.ts`](tests/e2e/fixtures/index.ts). An auto fixture opens the home page and dismisses the cookie banner when present.
+- **Logged-in tests** use `loggedInDescribe()`, which sets `loggedIn: true` and signs in through the UI via [`tests/e2e/steps/auth.steps.ts`](tests/e2e/steps/auth.steps.ts) before each test in that block.
 
-If credentials are missing, guest tests still run; authenticated tests are skipped.
+If credentials are missing, guest tests still run; logged-in tests are skipped.
 
-The default `BASE_URL` is configured in `playwright.config.ts` and can be overridden with an environment variable:
+### Assessment output
+
+The first guest test (`open specific product`) logs the lot title, favourite count, and current bid to the console per the assignment brief. Those `console.log` calls are intentional and are not replaced with extra assertions.
+
+### Browsers and headless mode
+
+[`playwright.config.ts`](playwright.config.ts) runs specs on Chromium, Firefox, and WebKit. Tests run headless by default; use `npm run test:e2e:headed` for local debugging.
+
+### Base URL
+
+Default `BASE_URL` is `https://www.catawiki.com` and can be overridden:
 
 ```bash
 BASE_URL=https://example.com npm run test:e2e
 ```
+
+## Scope and trade-offs
+
+Many additional scenarios are possible on Catawiki, but these tests run against **production**. Extra cases were intentionally not added—even as skipped or muted tests—because they would increase risk to real lots (bids, favourites, and other state changes).
+
+The project has scalability limitations (UI login per logged-in test, repeated navigation, a single spec file). For a take-home assignment, deeper architecture (API auth, `storageState`, test data factories, parallel-safe users) would be over-engineering for the stated scope.
+
+## Reports
+
+Playwright generates an HTML report under `playwright-report/` after a test run. That directory is gitignored and should not be committed; delete it locally or let the next run overwrite it.
+
+## CI
+
+GitHub Actions workflow [`.github/workflows/e2e.yml`](.github/workflows/e2e.yml) runs typecheck, lint, format check, and E2E tests on push and pull requests to `main`.
+
+Optional repository secrets for full coverage:
+
+- `E2E_USER_EMAIL`
+- `E2E_USER_PASSWORD`
+
+Without these secrets, guest tests run; logged-in tests are skipped.

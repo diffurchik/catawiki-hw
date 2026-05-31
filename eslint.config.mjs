@@ -9,15 +9,7 @@ const tsconfigRootDir = dirname(fileURLToPath(import.meta.url));
 
 export default tseslint.config(
   {
-    ignores: [
-      'node_modules/',
-      'allure-report/',
-      'allure-results/',
-      'playwright-report/',
-      'test-results/',
-      'coverage/',
-      'dist/',
-    ],
+    ignores: ['node_modules/', 'playwright-report/', 'test-results/', 'coverage/', 'dist/'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

@@ -1,4 +1,3 @@
-import { expect } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 
 export class SearchResultPage {
@@ -24,9 +23,5 @@ export class SearchResultPage {
 
   async openResult(index: number): Promise<void> {
     await this.getResult(index).click();
-  }
-
-  async expectResultVisible(index: number): Promise<void> {
-    await expect(this.getResult(index)).toBeVisible();
   }
 }

@@ -1,12 +1,13 @@
 import type { Locator, Page } from '@playwright/test';
 
-import { getBaseUrl } from '../utils/baseUrl';
+import { getBaseUrl } from '../utils/env';
 
 export class HomePage {
   readonly page: Page;
   readonly searchCombobox: Locator;
   readonly searchButton: Locator;
   readonly loginButton: Locator;
+  readonly favouriteLots: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -17,6 +18,7 @@ export class HomePage {
     this.loginButton = page
       .locator('#cw-header-container')
       .getByRole('button', { name: 'Sign in' });
+    this.favouriteLots = page.getByText('My bids & favourites');
   }
 
   async open(): Promise<void> {

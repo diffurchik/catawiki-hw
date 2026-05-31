@@ -53,11 +53,9 @@ web_modules/
 # Optional eslint cache
 .eslintcache
 
-# Playwright and Allure
+# Playwright
 test-results/
 playwright-report/
-allure-results/
-allure-report/
 tests/e2e/.auth/
 
 # Optional stylelint cache

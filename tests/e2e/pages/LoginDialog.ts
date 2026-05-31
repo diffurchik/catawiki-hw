@@ -21,8 +21,4 @@ export class LoginDialog {
     await this.emailInput.fill(email);
     await this.passwordInput.fill(password);
   }
-
-  async clickSignIn(): Promise<void> {
-    await this.signInButton.click();
-  }
 }
